@@ -2,12 +2,25 @@ from flask import Flask, render_template, request
 import pickle
 import joblib
 import numpy as np
+
+# Try to import TFLite runtime, fallback to full TensorFlow if not found (for local dev)
 try:
-    from tensorflow.keras.models import load_model
-    TF_AVAILABLE = True
+    import tflite_runtime.interpreter as tflite
+    print("Using tflite-runtime")
 except ImportError:
-    TF_AVAILABLE = False
-    print("Warning: TensorFlow not found. Spam and Tweet models will be disabled.")
+    try:
+        import tensorflow.lite as tflite
+        # Check if Interpreter is available, if not try to import it from python.interpreter
+        try:
+            _ = tflite.Interpreter
+        except AttributeError:
+            from tensorflow.lite.python.interpreter import Interpreter
+            # Monkey patch it back into tflite module for consistency
+            tflite.Interpreter = Interpreter
+        print("Using tensorflow.lite")
+    except ImportError:
+        tflite = None
+        print("Warning: TensorFlow Lite not found. Models will be disabled.")
 
 import os
 
@@ -18,16 +31,39 @@ MODEL_DIR = os.path.join(os.path.dirname(__file__), "models")
 models = {}
 vectorizers = {}
 
-if TF_AVAILABLE:
+# Helper function to run TFLite inference
+def predict_tflite(interpreter, input_data):
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+
+    # Resize input tensor to match input_data shape if necessary
+    # (Not strictly needed if we always pass 1 sample, but good practice)
+    interpreter.resize_tensor_input(input_details[0]['index'], input_data.shape)
+    interpreter.allocate_tensors()
+
+    interpreter.set_tensor(input_details[0]['index'], input_data.astype(np.float32))
+    interpreter.invoke()
+    output_data = interpreter.get_tensor(output_details[0]['index'])
+    return output_data
+
+if tflite:
     try:
-        models["spam"] = load_model(os.path.join(MODEL_DIR, "Spam_message.h5"))
-        models["tweet"] = load_model(os.path.join(MODEL_DIR, "Tweet.h5"))
+        # Load Spam Model
+        models["spam"] = tflite.Interpreter(model_path=os.path.join(MODEL_DIR, "spam_model.tflite"))
+        models["spam"].allocate_tensors()
+        
+        # Load Tweet Model
+        models["tweet"] = tflite.Interpreter(model_path=os.path.join(MODEL_DIR, "tweet_model.tflite"))
+        models["tweet"].allocate_tensors()
         
         vectorizers["spam"] = pickle.load(open(os.path.join(MODEL_DIR, "spam_vectorizer.pkl"), "rb"))
         vectorizers["tweet"] = pickle.load(open(os.path.join(MODEL_DIR, "tweet_vectorizer.pkl"), "rb"))
     except Exception as e:
-        print(f"Error loading TF models: {e}")
-        TF_AVAILABLE = False
+        print(f"Error loading TFLite models: {e}")
+        import traceback
+        traceback.print_exc()
+        models["spam"] = None
+        models["tweet"] = None
 else:
     models["spam"] = None
     models["tweet"] = None
@@ -62,21 +98,23 @@ def home():
             elif selected_model == "tweet":
                 if models["tweet"]:
                     vect = vectorizers["tweet"].transform([clean_input])
-                    pred = models["tweet"].predict(vect.toarray())
+                    # TFLite inference
+                    pred = predict_tflite(models["tweet"], vect.toarray())
                     prediction = np.argmax(pred, axis=1)[0]
                     label = rumor_labels[prediction]
                 else:
-                    label = "Error: Model not loaded (TensorFlow missing)"
+                    label = "Error: Model not loaded (TFLite missing)"
 
             elif selected_model == "spam":
                 if models["spam"]:
                     vect = vectorizers["spam"].transform([clean_input])
-                    pred = models["spam"].predict(vect.toarray())
+                    # TFLite inference
+                    pred = predict_tflite(models["spam"], vect.toarray())
                     prob = pred[0][0]
                     prediction = int(prob >= 0.5)
                     label = "Spam message" if prediction == 1 else "Likely not spam"
                 else:
-                    label = "Error: Model not loaded (TensorFlow missing)"
+                    label = "Error: Model not loaded (TFLite missing)"
 
     return render_template(
         "index.html",
