@@ -1,50 +1,77 @@
-# Truth-Scope
+# Multi-Model Fake News & Spam Detection
 
-**Truth-Scope** is an advanced AI-powered content detection tool designed to identify spam, verify rumors, and detect fake news. Built with Flask and Machine Learning, it provides a simple yet powerful interface for analyzing text content.
+A lightweight, machine-learning-powered web application that detects:
+1.  **Fake News**: Classifies news articles as Real or Fake.
+2.  **Spam Messages**: Identifies SMS/Email spam.
+3.  **Rumors in Tweets**: Categorizes tweets as True, False, Non-rumor, or Unverified.
 
-## Features
+Built with **Flask** and optimized with **TensorFlow Lite** for fast, low-memory deployment.
 
-- **Spam Detection**: Identifies whether a message is spam or legitimate.
-- **Rumor Verification**: Analyzes tweets to determine if they are true, false, non-rumors, or unverified.
-- **Fake News Detector**: Classifies news articles as "Real News" or "Fake News".
+## 🚀 Features
+- **Multi-Model Support**: Switch between three different AI models instantly.
+- **Optimized for Web**: Uses TFLite (`.tflite`) models to keep the app lightweight (~50MB) and fast.
+- **Responsive UI**: Clean, modern interface.
 
-## Technology Stack
-
-- **Frontend**: HTML5, CSS3 (Premium Glassmorphism Design)
+## 🛠️ Tech Stack
 - **Backend**: Python, Flask
-- **Machine Learning**: TensorFlow/Keras, Scikit-learn
-- **Models**:
-    - `Spam_message.h5` (Keras)
-    - `Tweet.h5` (Keras)
-    - `news.joblib` (Scikit-learn)
+- **ML Engine**: TensorFlow Lite (TFLite), Scikit-learn
+- **Frontend**: HTML, CSS
+- **Deployment**: Ready for Render.com (Gunicorn + Procfile included)
 
-## Setup & Usage
+## 📦 Installation (Local)
 
-1.  **Clone the repository**:
+1.  **Clone the repository**
     ```bash
-    git clone <repository-url>
-    cd Truth-Scope
+    git clone https://github.com/anshuman444/multi-model-fake-news-detection.git
+    cd multi-model-fake-news-detection
     ```
 
-2.  **Install dependencies**:
+2.  **Create a Virtual Environment**
     ```bash
-    pip install flask tensorflow scikit-learn numpy joblib
+    python -m venv .venv
+    # Windows
+    .venv\Scripts\activate
+    # Mac/Linux
+    source .venv/bin/activate
     ```
 
-3.  **Run the application**:
+3.  **Install Dependencies**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+4.  **Run the App**
     ```bash
     python app.py
     ```
+    Open [http://127.0.0.1:5000](http://127.0.0.1:5000) in your browser.
 
-4.  **Access the tool**:
-    Open your browser and navigate to `http://127.0.0.1:5000/`.
+## ☁️ Deployment (Render.com)
 
-## Project Structure
+This project is pre-configured for **Render**.
 
-- `app.py`: Main Flask application logic.
-- `templates/index.html`: The user interface.
-- `static/style.css`: Styling for the application.
-- `models/`: Directory containing pre-trained ML models and vectorizers.
+1.  Fork/Clone this repo to your GitHub.
+2.  Log in to [Render Dashboard](https://dashboard.render.com/).
+3.  Click **New +** > **Web Service**.
+4.  Connect your repository.
+5.  **Settings**:
+    - **Runtime**: Python 3
+    - **Build Command**: `pip install -r requirements.txt`
+    - **Start Command**: `gunicorn app:app`
+6.  Click **Deploy**.
 
----
-&copy; 2024 Truth-Scope AI
+## 📂 Project Structure
+```
+├── models/             # TFLite models and vectorizers
+├── static/             # CSS files
+├── templates/          # HTML templates
+├── app.py              # Main Flask application
+├── requirements.txt    # Python dependencies
+├── Procfile            # Deployment configuration
+└── README.md           # Documentation
+```
+
+## 🧠 Model Details
+- **News Model**: Logistic Regression (Scikit-learn)
+- **Spam Model**: Neural Network (Converted to TFLite)
+- **Tweet Model**: Neural Network (Converted to TFLite)
