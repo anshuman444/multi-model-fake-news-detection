@@ -3,21 +3,14 @@ import pickle
 import joblib
 import numpy as np
 
-# Try to import TFLite runtime, fallback to full TensorFlow if not found (for local dev)
+# Try to import TensorFlow Lite (preferred), fallback to runtime
 try:
-    import tflite_runtime.interpreter as tflite
-    print("Using tflite-runtime")
+    import tensorflow.lite as tflite
+    print("Using tensorflow.lite")
 except ImportError:
     try:
-        import tensorflow.lite as tflite
-        # Check if Interpreter is available, if not try to import it from python.interpreter
-        try:
-            _ = tflite.Interpreter
-        except AttributeError:
-            from tensorflow.lite.python.interpreter import Interpreter
-            # Monkey patch it back into tflite module for consistency
-            tflite.Interpreter = Interpreter
-        print("Using tensorflow.lite")
+        import tflite_runtime.interpreter as tflite
+        print("Using tflite-runtime")
     except ImportError:
         tflite = None
         print("Warning: TensorFlow Lite not found. Models will be disabled.")
