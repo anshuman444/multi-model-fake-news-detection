@@ -46,19 +46,7 @@ Built with **Flask** and optimized with **TensorFlow Lite** for fast, low-memory
     ```
     Open [http://127.0.0.1:5000](http://127.0.0.1:5000) in your browser.
 
-## ☁️ Deployment (Render.com)
 
-This project is pre-configured for **Render**.
-
-1.  Fork/Clone this repo to your GitHub.
-2.  Log in to [Render Dashboard](https://dashboard.render.com/).
-3.  Click **New +** > **Web Service**.
-4.  Connect your repository.
-5.  **Settings**:
-    - **Runtime**: Python 3
-    - **Build Command**: `pip install -r requirements.txt`
-    - **Start Command**: `gunicorn app:app`
-6.  Click **Deploy**.
 
 ## 📂 Project Structure
 ```
